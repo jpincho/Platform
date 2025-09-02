@@ -1,0 +1,27 @@
+﻿cmake_minimum_required (VERSION 3.10)
+
+project ("Platform")
+
+set ( CMAKE_C_STANDARD 11 )
+
+if (WIN32)
+	set (PLATFORM_WINDOWS TRUE PARENT_SCOPE)
+    set (PLATFORM_WINDOWS TRUE )
+else()
+	set (PLATFORM_LINUX TRUE PARENT_SCOPE)
+    set (PLATFORM_LINUX TRUE )
+endif()
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    set (PLATFORM_COMPILER_CLANG TRUE PARENT_SCOPE)
+    set (PLATFORM_COMPILER_CLANG TRUE )
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    set (PLATFORM_COMPILER_GNU TRUE PARENT_SCOPE)
+    set (PLATFORM_COMPILER_GNU TRUE )
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    set (PLATFORM_COMPILER_MSVC TRUE PARENT_SCOPE)
+    set (PLATFORM_COMPILER_MSVC TRUE )
+endif()
+configure_file ( Platform.h.in "${CMAKE_CURRENT_LIST_DIR}/Platform.h" )
+
+file ( GLOB PLATFORM_SOURCES "*.c" "*.h" Platform.h.in Platform.h )
+add_library ( Platform ${PLATFORM_SOURCES} )

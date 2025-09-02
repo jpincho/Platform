@@ -1,0 +1,7 @@
+#pragma once
+
+#cmakedefine PLATFORM_WINDOWS
+#cmakedefine PLATFORM_LINUX
+#cmakedefine PLATFORM_COMPILER_MSVC
+#cmakedefine PLATFORM_COMPILER_GNU
+#cmakedefine PLATFORM_COMPILER_CLANG
