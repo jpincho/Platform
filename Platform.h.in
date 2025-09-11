@@ -5,3 +5,13 @@
 #cmakedefine PLATFORM_COMPILER_MSVC
 #cmakedefine PLATFORM_COMPILER_GNU
 #cmakedefine PLATFORM_COMPILER_CLANG
+#cmakedefine PLATFORM_STRNLEN_EXISTS
+#cmakedefine PLATFORM_STRNDUP_EXISTS
+#cmakedefine PLATFORM_FNMATCH_EXISTS
+
+#if !defined (PLATFORM_STRNLEN_EXISTS)
+#include "strnlen.h"
+#endif
+#if !defined (PLATFORM_STRNDUP_EXISTS)
+#include "strndup.h"
+#endif

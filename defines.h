@@ -28,3 +28,7 @@
 #define __FUNCTION__ __func__
 #endif
 #endif
+
+#if !defined (UNUSED)
+#define UNUSED(x) (void)(x)
+#endif
