@@ -7,6 +7,10 @@
 #define END_C_DECLARATIONS
 #endif
 
+#ifndef UNUSED
+#define UNUSED(X) (void)X
+#endif
+
 #define SAFE_DEL_C(POINTER) {if((POINTER)!=NULL) {free((POINTER));(POINTER)=NULL;}}
 
 #ifndef MIN
