@@ -63,6 +63,10 @@ if(RESULT)
     set(PLATFORM_3DNOW_PLUS_AVAILABLE TRUE)
 endif()
 
+cmake_host_system_information(RESULT RESULT QUERY IS_64BIT)
+if(RESULT)
+    set(PLATFORM_64BIT TRUE)
+endif()
 configure_file ( Platform.h.in "${CMAKE_CURRENT_LIST_DIR}/Platform.h" )
 
 file ( GLOB PLATFORM_SOURCES "*.c" "*.h" Platform.h.in Platform.h )

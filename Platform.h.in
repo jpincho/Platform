@@ -17,6 +17,7 @@
 #cmakedefine PLATFORM_SSE_MMX_AVAILABLE
 #cmakedefine PLATFORM_3DNOW_AVAILABLE
 #cmakedefine PLATFORM_3DNOW_PLUS_AVAILABLE
+#cmakedefine PLATFORM_64BIT
 
 #if !defined (PLATFORM_STRNLEN_EXISTS)
 #include "strnlen.h"
