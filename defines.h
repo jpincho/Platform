@@ -1,4 +1,6 @@
 #pragma once
+#include <stdlib.h>
+
 #ifdef __cplusplus
 #define BEGIN_C_DECLARATIONS extern "C" {
 #define END_C_DECLARATIONS }
