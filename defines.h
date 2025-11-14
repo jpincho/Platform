@@ -38,3 +38,7 @@
 #if !defined (UNUSED)
 #define UNUSED(x) (void)(x)
 #endif
+
+#if defined(_MSC_VER)
+#define strdup _strdup
+#endif
