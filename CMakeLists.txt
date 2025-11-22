@@ -85,5 +85,10 @@ if(PLATFORM_FNMATCH_EXISTS)
 else()
     message(STATUS "${PROJECT_NAME} - Using custom fnmatch")
 endif()
+
+include(FetchContent)
+FetchContent_Declare ( dirent URL https://github.com/tronkko/dirent/archive/refs/heads/master.zip DOWNLOAD_EXTRACT_TIMESTAMP TRUE )
+FetchContent_MakeAvailable ( dirent )
+
 add_library ( Platform ${PLATFORM_SOURCES} )
 target_include_directories(Platform PUBLIC ${CMAKE_CURRENT_LIST_DIR})

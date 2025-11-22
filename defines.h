@@ -13,7 +13,7 @@
 #define UNUSED(X) (void)X
 #endif
 
-#define SAFE_DEL_C(POINTER) {if((POINTER)!=NULL) {free((POINTER));(POINTER)=NULL;}}
+#define SAFE_DEL_C(POINTER) do{if((POINTER)!=NULL) {free((POINTER));(POINTER)=NULL;}}while(0)
 
 #ifndef MIN
 #define MIN(A,B) ((A)<(B)?(A):(B))
