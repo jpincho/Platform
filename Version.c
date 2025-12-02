@@ -4,13 +4,13 @@
 #include <stdio.h>
 #endif
 
-void Version_Set(struct version *output, const unsigned major, const unsigned minor)
+void VersionNumber_Set(VersionNumber *output, const unsigned major, const unsigned minor)
 	{
 	output->major = major;
 	output->minor = minor;
 	}
 
-bool Version_ParseString(struct version *output, const char *string)
+bool VersionNumber_ParseString(VersionNumber *output, const char *string)
 	{
 	// Safe values
 	output->major = 0;
@@ -33,29 +33,29 @@ bool Version_ParseString(struct version *output, const char *string)
 	return true;
 	}
 
-bool Version_LesserThan (const struct version first, const unsigned major, const unsigned minor)
+bool VersionNumber_LesserThan (const VersionNumber first, const unsigned major, const unsigned minor)
 	{
 	return ((first.major < major) ||
 	        ((first.major == major) && (minor < minor)));
 	}
 
-bool Version_GreaterThan(const struct version first, const unsigned major, const unsigned minor)
+bool VersionNumber_GreaterThan(const VersionNumber first, const unsigned major, const unsigned minor)
 	{
 	return ((first.major > major) ||
 	        ((first.major == major) && (minor > minor)));
 	}
 
-bool Version_Equal(const struct version first, const unsigned major, const unsigned minor)
+bool VersionNumber_Equal(const VersionNumber first, const unsigned major, const unsigned minor)
 	{
 	return ((first.major == major) && (first.minor == minor));
 	}
 
-bool version_LesserThanOrEqual(const struct version first, const unsigned major, const unsigned minor)
+bool VersionNumber_LesserThanOrEqual(const VersionNumber first, const unsigned major, const unsigned minor)
 	{
-	return ((Version_LesserThan(first, major, minor)) || (Version_Equal(first, major, minor)));
+	return ((VersionNumber_LesserThan(first, major, minor)) || (VersionNumber_Equal(first, major, minor)));
 	}
 
-bool version_GreaterThanOrEqual(const struct version first, const unsigned major, const unsigned minor)
+bool VersionNumber_GreaterThanOrEqual(const VersionNumber first, const unsigned major, const unsigned minor)
 	{
-	return ((Version_GreaterThan(first, major, minor)) || (Version_Equal(first, major, minor)));
+	return ((VersionNumber_GreaterThan(first, major, minor)) || (VersionNumber_Equal(first, major, minor)));
 	}

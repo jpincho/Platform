@@ -1,7 +1,8 @@
 #pragma once
 #include "Platform.h"
-#if !defined (PLATFORM_FNMATCH_EXISTS)
 
+#if !defined (PLATFORM_FNMATCH_EXISTS)
+BEGIN_C_DECLARATIONS
 #define FNM_NOMATCH		-1
 #define FNM_NOESCAPE	-2
 #define FNM_PATHNAME	-3
@@ -13,4 +14,5 @@
 #define FNM_EXTMATCH	-7
 
 int fnmatch ( const char *pattern, const char *string, int flags );
+END_C_DECLARATIONS
 #endif

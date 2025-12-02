@@ -4,7 +4,7 @@
 #include "ConsoleTextColor.h"
 
 BEGIN_C_DECLARATIONS
-void Logger_Log( const char *filename, const char *long_function_name, const char *short_function_name, const unsigned line, int8_t text_color, const char *message, ... );
+void Logger_Log ( const char *Filename, const char *LongFunctionName, const char *ShortFunctionName, const unsigned LineNumber, int8_t TextColor, const char *Text, ... );
 
 #define LOG_MSG(...) do {Logger_Log ( __FILE__, __PRETTY_FUNCTION__, __FUNCTION__, __LINE__, -1, __VA_ARGS__ );} while(0)
 #define LOG_WARNING(...) do{Logger_Log ( __FILE__, __PRETTY_FUNCTION__, __FUNCTION__, __LINE__, YELLOW, __VA_ARGS__ );} while(0)
