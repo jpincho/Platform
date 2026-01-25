@@ -3,10 +3,10 @@
 #include "defines.h"
 
 BEGIN_C_DECLARATIONS
-typedef struct 
+typedef struct
 	{
 	unsigned major, minor;
-	}VersionNumber;
+	} VersionNumber;
 
 void VersionNumber_Set ( VersionNumber *output, const unsigned major, const unsigned minor );
 bool VersionNumber_ParseString ( VersionNumber *output, const char *string );

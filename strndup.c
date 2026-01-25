@@ -7,13 +7,13 @@
 #endif
 
 #if !defined (PLATFORM_STRNDUP_EXISTS)
-char *strndup(const char *string, const size_t max)
+char *strndup ( const char *string, const size_t max )
 	{
-	size_t len = strnlen(string, max);
-	char *p = malloc(len + 1);
-	if (p)
+	size_t len = strnlen ( string, max );
+	char *p = malloc ( len + 1 );
+	if ( p )
 		{
-		memcpy(p, string, len);
+		memcpy ( p, string, len );
 		p[len] = '\0';
 		}
 	return p;
