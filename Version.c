@@ -1,6 +1,9 @@
 #include "Version.h"
+#include "Platform.h"
 #include <string.h>
-#if defined ( _MSC_VER  )
+#if defined (PLATFORM_COMPILER_MSVC)
+#include <stdio.h>
+#elif defined (PLATFORM_COMPILER_GCC)
 #include <stdio.h>
 #endif
 
@@ -25,7 +28,7 @@ bool VersionNumber_ParseString ( VersionNumber *output, const char *string )
 	if ( *VersionStart != ' ' ) // If there was nothing before the version numbers, assume the whole string
 		VersionStart = string;
 
-#if defined ( _MSC_VER  )
+#if defined ( PLATFORM_COMPILER_MSVC  )
 	sscanf_s ( VersionStart, "%u.%u", &output->major, &output->minor );
 #else
 	sscanf ( VersionStart, "%u.%u", &output->major, &output->minor );
@@ -36,13 +39,13 @@ bool VersionNumber_ParseString ( VersionNumber *output, const char *string )
 bool VersionNumber_LesserThan ( const VersionNumber first, const unsigned major, const unsigned minor )
 	{
 	return ( ( first.major < major ) ||
-	         ( ( first.major == major ) && ( minor < minor ) ) );
+                 ( ( first.major == major ) && ( first.minor < minor ) ) );
 	}
 
 bool VersionNumber_GreaterThan ( const VersionNumber first, const unsigned major, const unsigned minor )
 	{
 	return ( ( first.major > major ) ||
-	         ( ( first.major == major ) && ( minor > minor ) ) );
+                 ( ( first.major == major ) && ( first.minor > minor ) ) );
 	}
 
 bool VersionNumber_Equal ( const VersionNumber first, const unsigned major, const unsigned minor )
