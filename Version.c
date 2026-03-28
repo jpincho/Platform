@@ -7,17 +7,17 @@
 #include <stdio.h>
 #endif
 
-void VersionNumber_Set ( VersionNumber *output, const unsigned major, const unsigned minor )
+void VersionNumber_Set ( VersionNumber *Output, const unsigned Major, const unsigned Minor )
 	{
-	output->major = major;
-	output->minor = minor;
+	Output->Major = Major;
+	Output->Minor = Minor;
 	}
 
-bool VersionNumber_ParseString ( VersionNumber *output, const char *string )
+bool VersionNumber_ParseString ( VersionNumber *Output, const char *string )
 	{
 	// Safe values
-	output->major = 0;
-	output->minor = 0;
+	Output->Major = 0;
+	Output->Minor = 0;
 
 	const char *DotPosition = strchr ( string, '.' );
 	if ( DotPosition == NULL )
@@ -29,36 +29,38 @@ bool VersionNumber_ParseString ( VersionNumber *output, const char *string )
 		VersionStart = string;
 
 #if defined ( PLATFORM_COMPILER_MSVC  )
-	sscanf_s ( VersionStart, "%u.%u", &output->major, &output->minor );
+	sscanf_s ( VersionStart, "%u.%u", &Output->Major, &Output->Minor );
 #else
-	sscanf ( VersionStart, "%u.%u", &output->major, &output->minor );
+	sscanf ( VersionStart, "%u.%u", &Output->Major, &Output->Minor );
 #endif
 	return true;
 	}
 
-bool VersionNumber_LesserThan ( const VersionNumber first, const unsigned major, const unsigned minor )
+bool VersionNumber_LesserThan ( const VersionNumber Version, const unsigned Major, const unsigned Minor )
 	{
-	return ( ( first.major < major ) ||
-                 ( ( first.major == major ) && ( first.minor < minor ) ) );
+	return ( ( Version.Major < Major ) ||
+	         ( ( Version.Major == Major ) && ( Version.Minor < Minor ) ) );
 	}
 
-bool VersionNumber_GreaterThan ( const VersionNumber first, const unsigned major, const unsigned minor )
+bool VersionNumber_GreaterThan ( const VersionNumber Version, const unsigned Major, const unsigned Minor )
 	{
-	return ( ( first.major > major ) ||
-                 ( ( first.major == major ) && ( first.minor > minor ) ) );
+	return ( ( Version.Major > Major ) ||
+	         ( ( Version.Major == Major ) && ( Version.Minor > Minor ) ) );
 	}
 
-bool VersionNumber_Equal ( const VersionNumber first, const unsigned major, const unsigned minor )
+bool VersionNumber_Equal ( const VersionNumber Version, const unsigned Major, const unsigned Minor )
 	{
-	return ( ( first.major == major ) && ( first.minor == minor ) );
+	return ( ( Version.Major == Major ) && ( Version.Minor == Minor ) );
 	}
 
-bool VersionNumber_LesserThanOrEqual ( const VersionNumber first, const unsigned major, const unsigned minor )
+bool VersionNumber_LesserThanOrEqual ( const VersionNumber Version, const unsigned Major, const unsigned Minor )
 	{
-	return ( ( VersionNumber_LesserThan ( first, major, minor ) ) || ( VersionNumber_Equal ( first, major, minor ) ) );
+	return ( ( Version.Major < Major ) ||
+	         ( ( Version.Major == Major ) && ( Version.Minor <= Minor ) ) );
 	}
 
-bool VersionNumber_GreaterThanOrEqual ( const VersionNumber first, const unsigned major, const unsigned minor )
+bool VersionNumber_GreaterThanOrEqual ( const VersionNumber Version, const unsigned Major, const unsigned Minor )
 	{
-	return ( ( VersionNumber_GreaterThan ( first, major, minor ) ) || ( VersionNumber_Equal ( first, major, minor ) ) );
+	return ( ( Version.Major > Major ) ||
+	         ( ( Version.Major == Major ) && ( Version.Minor >= Minor ) ) );
 	}

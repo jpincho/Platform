@@ -70,22 +70,6 @@ if(RESULT)
 endif()
 configure_file ( Platform.h.in "${CMAKE_CURRENT_LIST_DIR}/Platform.h" )
 
-if (NOT PLATFORM_FNMATCH_EXISTS)
-    message(STATUS "${PROJECT_NAME} - Using custom fnmatch")
-    configure_file (fnmatch.h.in "${CMAKE_CURRENT_LIST_DIR}/fnmatch.h")
-    list ( APPEND PLATFORM_LIBRARIES "Shlwapi" )
-endif()
-
-if (NOT PLATFORM_STRNLEN_EXISTS)
-    message(STATUS "${PROJECT_NAME} - Using custom strnlen")
-    configure_file (strnlen.h.in "${CMAKE_CURRENT_LIST_DIR}/strnlen.h")
-endif()
-
-if (NOT PLATFORM_STRNDUP_EXISTS)
-    message(STATUS "${PROJECT_NAME} - Using custom strndup")
-    configure_file (strndup.h.in "${CMAKE_CURRENT_LIST_DIR}/strndup.h")
-endif()
-
 if (NOT PLATFORM_DIRENT_EXISTS)
     message(STATUS "${PROJECT_NAME} - Using custom dirent")
     include(FetchContent)

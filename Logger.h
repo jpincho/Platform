@@ -1,5 +1,4 @@
 #pragma once
-#include "Platform.h"
 #include "defines.h"
 #include "ConsoleTextColor.h"
 

@@ -46,3 +46,5 @@
 #if defined(_MSC_VER)
 #define strdup _strdup
 #endif
+
+#define ASSERT_FAIL(__CONDITION__) if(!(__CONDITION__)) {printf("ASSERT FAILED! (%s, %u) '%s'\n", __FILE__, __LINE__, #__CONDITION__); exit(-1);}
