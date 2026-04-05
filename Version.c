@@ -3,7 +3,7 @@
 #include <string.h>
 #if defined (PLATFORM_COMPILER_MSVC)
 #include <stdio.h>
-#elif defined (PLATFORM_COMPILER_GCC)
+#elif defined (PLATFORM_COMPILER_GNU)
 #include <stdio.h>
 #endif
 

@@ -3,7 +3,7 @@
 #if defined ( PLATFORM_COMPILER_MSVC )
 #include <windows.h>
 #include <sysinfoapi.h>
-#elif defined (PLATFORM_COMPILER_GCC)
+#elif defined (PLATFORM_COMPILER_GNU)
 #include <sys/time.h>
 #endif
 
@@ -17,7 +17,7 @@ double Platform_GetPerformanceCurrentTime ( void )
 		}
 	QueryPerformanceCounter ( &now );
 	return ( double ) now.QuadPart / ( double ) frequency.QuadPart;
-#elif defined ( PLATFORM_COMPILER_GCC)
+#elif defined ( PLATFORM_COMPILER_GNU)
 	struct timespec spec;
 	static double NanoDivisor = 1.0 / 1.0e9;
 	clock_gettime ( CLOCK_MONOTONIC, &spec );
@@ -44,7 +44,7 @@ local_time_struct Platform_GetLocalTime ( void )
 	result.tm_year = local_time.wYear;
 	result.tm_wday = local_time.wDay;
 	result.tm_usec = 0;
-#elif defined ( PLATFORM_COMPILER_GCC)
+#elif defined ( PLATFORM_COMPILER_GNU)
 	struct timespec spec;
 	clock_gettime ( CLOCK_REALTIME, &spec );
 	struct tm *new_time = gmtime ( &spec.tv_sec );
