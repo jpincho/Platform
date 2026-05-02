@@ -81,7 +81,4 @@ file ( GLOB PLATFORM_SOURCES "*.c" "*.h" "*.h.in" Platform.h )
 
 
 add_library ( Platform ${PLATFORM_SOURCES} )
-target_include_directories(Platform PUBLIC ${CMAKE_CURRENT_LIST_DIR})
-if (PLATFORM_LIBRARIES)
-    target_link_libraries(Platform PUBLIC ${PLATFORM_LIBRARIES})
-endif()
+target_include_directories( Platform PUBLIC "${CMAKE_CURRENT_LIST_DIR}/..")
