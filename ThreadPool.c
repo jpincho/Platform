@@ -1,6 +1,5 @@
 #include "ThreadPool.h"
 #include "PointerList.h"
-#include <Platform/PlatformCPU.h>
 #include <threads.h>
 #include <assert.h>
 
@@ -11,11 +10,13 @@ typedef struct
 	int TaskID;
 	int Result;
 	TaskStatus Status;
+	bool Keep;
 	} TaskData;
 
 typedef struct ThreadPool
 	{
-	PointerList TaskQueue;
+	PointerList TaskQueue, KeptTasks;
+
 	int LastTaskID;
 	mtx_t TaskQueueMutex;
 	cnd_t WakeUpCondition;
@@ -49,7 +50,8 @@ static int ThreadPool_LoopFunction ( ThreadPool *Pool )
 			CurrentTask->Result = CurrentTask->FunctionPointer ( CurrentTask->Argument );
 			CurrentTask->Status = TASK_STATUS_FINISHED;
 			cnd_signal ( &Pool->TaskFinishedCondition );
-			free ( CurrentTask );
+			if ( CurrentTask->Keep == false )
+				free ( CurrentTask );
 			}
 		else // No more tasks. Wait for a signal
 			{
@@ -62,8 +64,10 @@ static int ThreadPool_LoopFunction ( ThreadPool *Pool )
 	return 0;
 	}
 
-ThreadPool *ThreadPool_Create ( void )
+ThreadPool *ThreadPool_Create ( const unsigned ThreadCount )
 	{
+	if ( ThreadCount == 0 )
+		return NULL;
 	ThreadPool *Pool = calloc ( 1, sizeof ( ThreadPool ) );
 	if ( Pool == NULL )
 		return NULL;
@@ -87,7 +91,7 @@ ThreadPool *ThreadPool_Create ( void )
 		goto OnError;
 	++Progress;
 
-	Pool->ThreadCount = Platform_GetCoreCount();
+	Pool->ThreadCount = ThreadCount;
 	Pool->Quitting = false;
 	Pool->ThreadArray = calloc ( Pool->ThreadCount, sizeof ( thrd_t ) );
 	if ( Pool->ThreadArray == NULL )
@@ -122,7 +126,7 @@ void ThreadPool_Destroy ( ThreadPool *Pool )
 	if ( Pool == NULL )
 		return;
 
-	ThreadPool_CancelAll ( Pool );
+	ThreadPool_CancelAllTasks ( Pool );
 
 	Pool->Quitting = true;
 	cnd_broadcast ( &Pool->WakeUpCondition );
@@ -142,10 +146,18 @@ void ThreadPool_Destroy ( ThreadPool *Pool )
 
 	Pool->LastTaskID = -1;
 	PointerList_Destroy ( &Pool->TaskQueue );
+	PointerList_Destroy ( &Pool->KeptTasks );
 	free ( Pool );
 	}
 
-int ThreadPool_AddTask ( ThreadPool *Pool, int ( *FunctionPointer ) ( void * ), void *Argument )
+unsigned ThreadPool_GetThreadCount ( const ThreadPool *Pool )
+	{
+	if ( Pool == NULL )
+		return 0;
+	return Pool->ThreadCount;
+	}
+
+int ThreadPool_AddTask ( ThreadPool *Pool, int ( *FunctionPointer ) ( void * ), void *Argument, const bool Keep )
 	{
 	assert ( Pool != NULL );
 	if ( Pool == NULL )
@@ -160,9 +172,12 @@ int ThreadPool_AddTask ( ThreadPool *Pool, int ( *FunctionPointer ) ( void * ), 
 	NewTask->Argument = Argument;
 	NewTask->TaskID = TaskID;
 	NewTask->Status = TASK_STATUS_QUEUED;
+	NewTask->Keep = Keep;
 
 	mtx_lock ( &Pool->TaskQueueMutex );
 	PointerList_AddAtEnd ( &Pool->TaskQueue, NewTask );
+	if ( Keep )
+		PointerList_AddAtEnd ( &Pool->KeptTasks, NewTask );
 	mtx_unlock ( &Pool->TaskQueueMutex );
 
 	cnd_signal ( &Pool->WakeUpCondition );
@@ -184,6 +199,18 @@ void ThreadPool_CancelTask ( ThreadPool *Pool, const int TaskID )
 		TaskData *TaskPointer = ( TaskData* ) PointerList_GetNodeData ( NodeIterator );
 		if ( TaskPointer->TaskID == TaskID )
 			{
+			if ( TaskPointer->Keep == true )
+				{
+				for ( PointerListNode *KeptNodeIterator = PointerList_GetFirst ( &Pool->KeptTasks ); KeptNodeIterator != NULL; KeptNodeIterator = PointerList_GetNextNode ( KeptNodeIterator ) )
+					{
+					TaskData *KeptTaskPointer = ( TaskData* ) PointerList_GetNodeData ( KeptNodeIterator );
+					if ( KeptTaskPointer == TaskPointer )
+						{
+						PointerList_DestroyNode ( &Pool->KeptTasks, KeptNodeIterator );
+						break;
+						}
+					}
+				}
 			free ( TaskPointer );
 			PointerList_DestroyNode ( &Pool->TaskQueue, NodeIterator );
 			break;
@@ -192,7 +219,7 @@ void ThreadPool_CancelTask ( ThreadPool *Pool, const int TaskID )
 	mtx_unlock ( &Pool->TaskQueueMutex );
 	}
 
-void ThreadPool_CancelAll ( ThreadPool *Pool )
+void ThreadPool_CancelAllTasks ( ThreadPool *Pool )
 	{
 	assert ( Pool != NULL );
 	if ( Pool == NULL )
@@ -205,6 +232,7 @@ void ThreadPool_CancelAll ( ThreadPool *Pool )
 		free ( TaskPointer );
 		}
 	PointerList_Clear ( &Pool->TaskQueue );
+	PointerList_Clear ( &Pool->KeptTasks );
 	mtx_unlock ( &Pool->TaskQueueMutex );
 	}
 
@@ -217,19 +245,32 @@ TaskStatus ThreadPool_GetTaskStatus ( ThreadPool *Pool, const int TaskID )
 		return false;
 
 	// Search for this task on the queue
-	TaskStatus Result = TASK_STATUS_NOT_FOUND;
+	TaskStatus Status = TASK_STATUS_NOT_FOUND;
 	mtx_lock ( &Pool->TaskQueueMutex );
 	for ( PointerListNode *NodeIterator = PointerList_GetFirst ( &Pool->TaskQueue ); NodeIterator != NULL; NodeIterator = PointerList_GetNextNode ( NodeIterator ) )
 		{
 		TaskData *TaskPointer = ( TaskData* ) PointerList_GetNodeData ( NodeIterator );
 		if ( TaskPointer->TaskID == TaskID )
 			{
-			Result = TaskPointer->Status;
+			Status = TaskPointer->Status;
 			break;
 			}
 		}
+	if ( Status == TASK_STATUS_NOT_FOUND )
+		{
+		for ( PointerListNode *KeptNodeIterator = PointerList_GetFirst ( &Pool->KeptTasks ); KeptNodeIterator != NULL; KeptNodeIterator = PointerList_GetNextNode ( KeptNodeIterator ) )
+			{
+			TaskData *KeptTaskPointer = ( TaskData* ) PointerList_GetNodeData ( KeptNodeIterator );
+			if ( KeptTaskPointer->TaskID == TaskID )
+				{
+				Status = KeptTaskPointer->Status;
+				break;
+				}
+			}
+
+		}
 	mtx_unlock ( &Pool->TaskQueueMutex );
-	return Result;
+	return Status;
 	}
 
 bool ThreadPool_WaitForAllTasks ( ThreadPool *Pool )
@@ -253,4 +294,88 @@ bool ThreadPool_WaitForAllTasks ( ThreadPool *Pool )
 		}
 
 	return true;
+	}
+
+bool ThreadPool_WaitForTask ( ThreadPool *Pool, const int TaskID )
+	{
+	assert ( Pool != NULL );
+	if ( Pool == NULL )
+		return false;
+	if ( TaskID < 0 )
+		return false;
+
+	// Search for this task on the queue
+	TaskData *Task = NULL;
+	mtx_lock ( &Pool->TaskQueueMutex );
+	for ( PointerListNode *NodeIterator = PointerList_GetFirst ( &Pool->TaskQueue ); NodeIterator != NULL; NodeIterator = PointerList_GetNextNode ( NodeIterator ) )
+		{
+		TaskData *TaskPointer = ( TaskData* ) PointerList_GetNodeData ( NodeIterator );
+		if ( TaskPointer->TaskID == TaskID )
+			{
+			Task = TaskPointer;
+			Task->Keep = true;
+			break;
+			}
+		}
+	mtx_unlock ( &Pool->TaskQueueMutex );
+
+	if ( Task == NULL )
+		return false;
+
+	while ( Task->Status != TASK_STATUS_FINISHED )
+		{
+		mtx_lock ( &Pool->TaskFinishedMutex );
+		cnd_wait ( &Pool->TaskFinishedCondition, &Pool->TaskFinishedMutex );
+		mtx_unlock ( &Pool->TaskFinishedMutex );
+		}
+	return true;
+	}
+
+bool ThreadPool_FreeKeptTask ( ThreadPool *Pool, const int TaskID )
+	{
+	assert ( Pool != NULL );
+	if ( Pool == NULL )
+		return false;
+	if ( TaskID < 0 )
+		return false;
+
+	mtx_lock ( &Pool->TaskQueueMutex );
+	for ( PointerListNode *NodeIterator = PointerList_GetFirst ( &Pool->KeptTasks ); NodeIterator != NULL; NodeIterator = PointerList_GetNextNode ( NodeIterator ) )
+		{
+		TaskData *TaskPointer = ( TaskData* ) PointerList_GetNodeData ( NodeIterator );
+		if ( TaskPointer->TaskID == TaskID )
+			{
+			if ( TaskPointer->Status == TASK_STATUS_FINISHED )
+				{
+				free ( TaskPointer );
+				PointerList_DestroyNode ( &Pool->KeptTasks, NodeIterator );
+				mtx_unlock ( &Pool->TaskQueueMutex );
+				return true;
+				}
+			mtx_unlock ( &Pool->TaskQueueMutex );
+			return false;
+			}
+		}
+	mtx_unlock ( &Pool->TaskQueueMutex );
+	return false;
+	}
+
+void ThreadPool_FreeAllFinishedKeptTasks ( ThreadPool *Pool )
+	{
+	assert ( Pool != NULL );
+	if ( Pool == NULL )
+		return;
+
+	mtx_lock ( &Pool->TaskQueueMutex );
+	for ( PointerListNode *NodeIterator = PointerList_GetFirst ( &Pool->KeptTasks ); NodeIterator != NULL; NodeIterator = PointerList_GetNextNode ( NodeIterator ) )
+		{
+		TaskData *TaskPointer = ( TaskData* ) PointerList_GetNodeData ( NodeIterator );
+		if ( TaskPointer->Status == TASK_STATUS_FINISHED )
+			{
+			free ( TaskPointer );
+			PointerList_DestroyNode ( &Pool->KeptTasks, NodeIterator );
+			}
+		}
+	mtx_unlock ( &Pool->TaskQueueMutex );
+	return;
 	}
