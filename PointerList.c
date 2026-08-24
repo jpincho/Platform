@@ -9,12 +9,6 @@ void PointerList_Initialize ( PointerList *List )
 	List->Count = 0;
 	}
 
-void PointerList_Destroy ( PointerList *List )
-	{
-	PointerList_Clear ( List );
-	free ( List );
-	}
-
 PointerListNode *PointerList_AddAtEnd ( PointerList *List, const void *Data )
 	{
 	PointerListNode *NewNode = calloc ( 1, sizeof ( PointerListNode ) );
@@ -66,8 +60,7 @@ PointerListNode *PointerList_InsertAfter ( PointerList *List, PointerListNode *N
 		Node->Next->Previous = NewNode;
 	Node->Next = NewNode;
 
-	// if Last Node was the reference Node, it is now the new one
-	if ( Node->Next == List->Last )
+	if ( Node == List->Last )
 		List->Last = NewNode;
 	++List->Count;
 	return NewNode;
@@ -100,8 +93,7 @@ PointerListNode *PointerList_InsertBefore ( PointerList *List, PointerListNode *
 		Node->Previous->Next = NewNode;
 	Node->Previous = NewNode;
 
-	// if First Node was the reference Node, it is now the new one
-	if ( Node->Previous == List->First )
+	if ( Node == List->First )
 		List->First = NewNode;
 	++List->Count;
 	return NewNode;

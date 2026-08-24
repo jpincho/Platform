@@ -22,7 +22,6 @@ typedef struct PointerList
 	} PointerList;
 
 void PointerList_Initialize ( PointerList *List );
-void PointerList_Destroy ( PointerList *List );
 PointerListNode *PointerList_AddAtEnd ( PointerList *List, const void *Data );
 PointerListNode *PointerList_InsertAfter ( PointerList *List, PointerListNode *Node, const void *Data );
 PointerListNode *PointerList_InsertBefore ( PointerList *List, PointerListNode *Node, const void *Data );

@@ -60,6 +60,8 @@ bool PointerArray_AddAtEnd ( PointerArray *Array, const intptr_t Data )
 
 bool PointerArray_InsertAt ( PointerArray *Array, const unsigned Index, const intptr_t Data )
 	{
+	if ( Index > Array->Count )
+		return false;
 	if ( PointerArray_EnsureFreeSpace ( Array, 1 ) == false )
 		return false;
 
@@ -72,7 +74,8 @@ bool PointerArray_InsertAt ( PointerArray *Array, const unsigned Index, const in
 
 void PointerArray_RemoveAt ( PointerArray *Array, const unsigned Index )
 	{
-	PointerArray_EnsureFreeSpace ( Array, 1 );
+	if ( Index >= Array->Count )
+		return;
 
 	// shift all elements back
 	memmove ( Array->Data + Index, Array->Data + Index + 1, ( Array->Count - Index - 1 ) * sizeof ( intptr_t ) );
