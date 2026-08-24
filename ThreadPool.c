@@ -2,7 +2,9 @@
 #include "PointerList.h"
 #include <Platform/PlatformCPU.h>
 #include <threads.h>
+#include <stdatomic.h>
 #include <assert.h>
+#include <Platform/Logger.h>
 
 typedef struct
 	{
@@ -24,38 +26,62 @@ typedef struct ThreadPool
 	mtx_t TaskFinishedMutex;
 
 	thrd_t *ThreadArray;
+	atomic_int FreeThreads;
 	unsigned ThreadCount;
 	bool Quitting;
 	} ThreadPool;
 
-static int ThreadPool_LoopFunction ( ThreadPool *Pool )
+static unsigned ThreadPool_GetTaskCount ( ThreadPool *Pool )
+	{
+	unsigned Result = 0;
+	mtx_lock ( &Pool->TaskQueueMutex );
+	Result = PointerList_GetSize ( &Pool->TaskQueue );
+	mtx_unlock ( &Pool->TaskQueueMutex );
+	return Result;
+	}
+
+static int ThreadPool_ThreadWorker ( ThreadPool *Pool )
 	{
 	do
 		{
-		// Grab the first available task, if available
 		mtx_lock ( &Pool->TaskQueueMutex );
-		PointerListNode *TaskNode = PointerList_GetFirst ( &Pool->TaskQueue );
+
 		TaskData *CurrentTask = NULL;
-		if ( TaskNode != NULL )
+
+		// Find the first queued task
+		PointerListNode *TaskNode = NULL;
+		for ( TaskNode = PointerList_GetFirst ( &Pool->TaskQueue ); TaskNode != NULL; TaskNode = PointerList_GetNextNode ( TaskNode ) )
 			{
-			CurrentTask = ( TaskData* ) PointerList_GetNodeData ( TaskNode );
-			PointerList_DestroyNode ( &Pool->TaskQueue, TaskNode );
+			TaskData *TempTask = ( TaskData* ) PointerList_GetNodeData ( TaskNode );
+			if ( TempTask->Status == TASK_STATUS_QUEUED ) // Found a queued task
+				{
+				CurrentTask = TempTask;
+				CurrentTask->Status = TASK_STATUS_RUNNING;
+				break;
+				}
 			}
+
 		mtx_unlock ( &Pool->TaskQueueMutex );
 
 		if ( CurrentTask != NULL ) // There was a task. run it...
 			{
-			CurrentTask->Status = TASK_STATUS_RUNNING;
 			CurrentTask->Result = CurrentTask->FunctionPointer ( CurrentTask->Argument );
 			CurrentTask->Status = TASK_STATUS_FINISHED;
-			cnd_signal ( &Pool->TaskFinishedCondition );
+			cnd_broadcast ( &Pool->TaskFinishedCondition );
 			free ( CurrentTask );
+			mtx_lock ( &Pool->TaskQueueMutex );
+			PointerList_DestroyNode ( &Pool->TaskQueue, TaskNode );
+			mtx_unlock ( &Pool->TaskQueueMutex );
 			}
 		else // No more tasks. Wait for a signal
 			{
+			atomic_fetch_add ( &Pool->FreeThreads, 1 );
+			LOG_DEBUG ( "sleeping - %u %u %u", thrd_current(), Pool->FreeThreads, Pool->ThreadCount );
 			mtx_lock ( &Pool->WakeUpMutex );
 			cnd_wait ( &Pool->WakeUpCondition, &Pool->WakeUpMutex );
 			mtx_unlock ( &Pool->WakeUpMutex ); // unlock mutex so that other ThreadArray can wait using it
+			atomic_fetch_sub ( &Pool->FreeThreads, 1 );
+			LOG_DEBUG ( "woke up - %u %u %u", thrd_current(), Pool->FreeThreads, Pool->ThreadCount );
 			}
 		}
 	while ( Pool->Quitting == false );
@@ -88,6 +114,7 @@ ThreadPool *ThreadPool_Create ( void )
 	++Progress;
 
 	Pool->ThreadCount = Platform_GetCoreCount();
+	Pool->FreeThreads = 0;
 	Pool->Quitting = false;
 	Pool->ThreadArray = calloc ( Pool->ThreadCount, sizeof ( thrd_t ) );
 	if ( Pool->ThreadArray == NULL )
@@ -96,7 +123,7 @@ ThreadPool *ThreadPool_Create ( void )
 
 	for ( unsigned index = 0; index < Pool->ThreadCount; ++index )
 		{
-		thrd_create ( &Pool->ThreadArray[index], ( thrd_start_t ) ThreadPool_LoopFunction, Pool );
+		thrd_create ( &Pool->ThreadArray[index], ( thrd_start_t ) ThreadPool_ThreadWorker, Pool );
 		}
 	return Pool;
 
@@ -165,6 +192,7 @@ int ThreadPool_AddTask ( ThreadPool *Pool, int ( *FunctionPointer ) ( void * ), 
 	PointerList_AddAtEnd ( &Pool->TaskQueue, NewTask );
 	mtx_unlock ( &Pool->TaskQueueMutex );
 
+	LOG_DEBUG ( "Added new task. %u %u %u", ThreadPool_GetTaskCount ( Pool ), Pool->FreeThreads, Pool->ThreadCount );
 	cnd_signal ( &Pool->WakeUpCondition );
 	return TaskID;
 	}
@@ -238,19 +266,30 @@ bool ThreadPool_WaitForAllTasks ( ThreadPool *Pool )
 	if ( Pool == NULL )
 		return false;
 
-	bool IsEmpty = false;
-	mtx_lock ( &Pool->TaskQueueMutex );
-	IsEmpty = PointerList_IsEmpty ( &Pool->TaskQueue );
-	mtx_unlock ( &Pool->TaskQueueMutex );
-	while ( IsEmpty == false )
+	// For some fucking stupid reason, cnd_timedwait does not take an interval, it takes an absolute time value
+	struct timespec TimeToWait;
+	timespec_get ( &TimeToWait, TIME_UTC ); // Get current time
+	TimeToWait.tv_sec += 20;
+
+	unsigned Size = ThreadPool_GetTaskCount ( Pool );
+	unsigned FreeThreads = atomic_load ( &Pool->FreeThreads );
+	LOG_DEBUG ( "Waiting for all tasks. %u %u", Size, FreeThreads );
+	while ( ( Size > 0 ) || ( FreeThreads != Pool->ThreadCount ) )
 		{
+		LOG_DEBUG ( "Task queue size %u - Threads %u/%u", Size, FreeThreads, Pool->ThreadCount );
 		mtx_lock ( &Pool->TaskFinishedMutex );
-		cnd_wait ( &Pool->TaskFinishedCondition, &Pool->TaskFinishedMutex );
+		int WaitResult = cnd_timedwait ( &Pool->TaskFinishedCondition, &Pool->TaskFinishedMutex, &TimeToWait );
 		mtx_unlock ( &Pool->TaskFinishedMutex );
-		mtx_lock ( &Pool->TaskQueueMutex );
-		IsEmpty = PointerList_IsEmpty ( &Pool->TaskQueue );
-		mtx_unlock ( &Pool->TaskQueueMutex );
+
+		if ( WaitResult == thrd_timedout )
+			{
+			LOG_ERROR ( "Timeout occurred while waiting for task finished condition" );
+			return false;
+			}
+		Size = ThreadPool_GetTaskCount ( Pool );
+		FreeThreads = atomic_load ( &Pool->FreeThreads );
 		}
+	LOG_DEBUG ( "Waiting complete" );
 
 	return true;
 	}

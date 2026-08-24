@@ -12,11 +12,11 @@ typedef struct
 
 void PointerArray_Initialize ( PointerArray *Array );
 void PointerArray_Destroy ( PointerArray *Array );
-bool PointerArray_Reserve ( PointerArray *Array, unsigned NewCapacity );
-bool PointerArray_EnsureFreeSpace ( PointerArray *Array, unsigned FreeSpace );
-bool PointerArray_AddAtEnd ( PointerArray *Array, intptr_t Data );
-bool PointerArray_InsertAt ( PointerArray *Array, unsigned Index, intptr_t Data );
-void PointerArray_RemoveAt ( PointerArray *Array, unsigned Index );
+bool PointerArray_Reserve ( PointerArray *Array, const unsigned NewCapacity );
+bool PointerArray_EnsureFreeSpace ( PointerArray *Array, const unsigned FreeSpace );
+bool PointerArray_AddAtEnd ( PointerArray *Array, const intptr_t Data );
+bool PointerArray_InsertAt ( PointerArray *Array, const unsigned Index, const intptr_t Data );
+void PointerArray_RemoveAt ( PointerArray *Array, const unsigned Index );
 bool PointerArray_IsEmpty ( const PointerArray *Array );
 unsigned PointerArray_GetSize ( const PointerArray *Array );
 void PointerArray_Clear ( PointerArray *Array );

@@ -21,7 +21,7 @@ void PointerArray_Destroy ( PointerArray *Array )
 	Array->Data = NULL;
 	}
 
-bool PointerArray_Reserve ( PointerArray *Array, unsigned NewCapacity )
+bool PointerArray_Reserve ( PointerArray *Array, const unsigned NewCapacity )
 	{
 	if ( NewCapacity < Array->Count )
 		return false;
@@ -34,12 +34,13 @@ bool PointerArray_Reserve ( PointerArray *Array, unsigned NewCapacity )
 	return true;
 	}
 
-bool PointerArray_EnsureFreeSpace ( PointerArray *Array, unsigned FreeSpace )
+bool PointerArray_EnsureFreeSpace ( PointerArray *Array, const unsigned FreeSpace )
 	{
 	unsigned NeededCapacity = Array->Count + FreeSpace;
 	if ( NeededCapacity > Array->Capacity )
 		{
 		unsigned NewSize = NeededCapacity / 10;
+		NewSize *= 10;
 		if ( NewSize < NeededCapacity )
 			NewSize += 10;
 		return PointerArray_Reserve ( Array, NewSize );
@@ -47,7 +48,7 @@ bool PointerArray_EnsureFreeSpace ( PointerArray *Array, unsigned FreeSpace )
 	return true;
 	}
 
-bool PointerArray_AddAtEnd ( PointerArray *Array, intptr_t Data )
+bool PointerArray_AddAtEnd ( PointerArray *Array, const intptr_t Data )
 	{
 	if ( PointerArray_EnsureFreeSpace ( Array, 1 ) == false )
 		return false;
@@ -57,24 +58,24 @@ bool PointerArray_AddAtEnd ( PointerArray *Array, intptr_t Data )
 	return true;
 	}
 
-bool PointerArray_InsertAt ( PointerArray *Array, unsigned Index, intptr_t Data )
+bool PointerArray_InsertAt ( PointerArray *Array, const unsigned Index, const intptr_t Data )
 	{
 	if ( PointerArray_EnsureFreeSpace ( Array, 1 ) == false )
 		return false;
 
 	// shift all elements forward
-	memmove ( Array->Data + Index + 1, Array->Data + Index, Array->Count - Index );
+	memmove ( Array->Data + Index + 1, Array->Data + Index, ( Array->Count - Index ) * sizeof ( intptr_t ) );
 	Array->Data[Index] = Data;
 	++Array->Count;
 	return true;
 	}
 
-void PointerArray_RemoveAt ( PointerArray *Array, unsigned Index )
+void PointerArray_RemoveAt ( PointerArray *Array, const unsigned Index )
 	{
 	PointerArray_EnsureFreeSpace ( Array, 1 );
 
 	// shift all elements back
-	memmove ( Array->Data + Index, Array->Data + Index + 1, Array->Count - Index - 1 );
+	memmove ( Array->Data + Index, Array->Data + Index + 1, ( Array->Count - Index - 1 ) * sizeof ( intptr_t ) );
 	--Array->Count;
 	}
 

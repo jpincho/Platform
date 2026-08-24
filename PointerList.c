@@ -120,6 +120,7 @@ void PointerList_DestroyNode ( PointerList *List, PointerListNode *Node )
 	if ( Node == List->Last )
 		List->Last = Node->Previous;
 	Node->Next = Node->Previous = NULL;
+	free ( Node );
 	--List->Count;
 	}
 
@@ -135,14 +136,14 @@ unsigned PointerList_GetSize ( const PointerList *List )
 
 void PointerList_Clear ( PointerList *List )
 	{
-	PointerListNode *iterator = List->First;
-	while ( iterator != NULL )
+	PointerListNode *Iterator = List->First;
+	while ( Iterator != NULL )
 		{
-		PointerListNode *Next = iterator->Next;
-		iterator->Next = iterator->Previous = NULL;
-		iterator->Owner = NULL;
-		free ( iterator );
-		iterator = Next;
+		PointerListNode *Next = Iterator->Next;
+		Iterator->Next = Iterator->Previous = NULL;
+		Iterator->Owner = NULL;
+		free ( Iterator );
+		Iterator = Next;
 		}
 	List->First = List->Last = NULL;
 	List->Count = 0;
@@ -153,9 +154,9 @@ const void *PointerList_GetNodeData ( const PointerListNode *Node )
 #define PLATFORM_DEBUG 1
 #if defined (PLATFORM_DEBUG)
 	assert ( Node->Owner != NULL );
-	for ( PointerListNode *iterator = Node->Owner->First; iterator != NULL; iterator = iterator->Next )
+	for ( PointerListNode *Iterator = Node->Owner->First; Iterator != NULL; Iterator = Iterator->Next )
 		{
-		if ( iterator == Node )
+		if ( Iterator == Node )
 			return Node->Data;
 		}
 	assert ( false && "Node does not belong to the List" );
@@ -163,17 +164,19 @@ const void *PointerList_GetNodeData ( const PointerListNode *Node )
 	return Node->Data;
 	}
 
-PointerListNode *PointerList_Find ( const PointerList *List, PointerListNode *start, const void *Data )
+PointerListNode *PointerList_Find ( const PointerList *List, PointerListNode *Start, const void *Data )
 	{
-	if ( start == NULL )
+	if ( Start == NULL )
+		Start = List->First;
+	if ( Start == NULL )
 		return NULL;
-	assert ( start->Owner == List );
-	PointerListNode *iterator = start;
-	while ( ( iterator != NULL ) && ( start->Data != Data ) )
+	assert ( Start->Owner == List );
+	PointerListNode *Iterator = Start;
+	while ( ( Iterator != NULL ) && ( Iterator->Data != Data ) )
 		{
-		iterator = iterator->Next;
+		Iterator = Iterator->Next;
 		}
-	return iterator;
+	return Iterator;
 	}
 
 PointerListNode *PointerList_GetFirst ( const PointerList *List )
