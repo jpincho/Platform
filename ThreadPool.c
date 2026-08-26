@@ -42,7 +42,7 @@ static unsigned ThreadPool_GetTaskCount ( ThreadPool *Pool )
 
 static int ThreadPool_ThreadWorker ( ThreadPool *Pool )
 	{
-	do
+	while ( Pool->Quitting == false )
 		{
 		mtx_lock ( &Pool->TaskQueueMutex );
 
@@ -84,7 +84,6 @@ static int ThreadPool_ThreadWorker ( ThreadPool *Pool )
 			LOG_DEBUG ( "woke up - %u %u %u", thrd_current(), Pool->FreeThreads, Pool->ThreadCount );
 			}
 		}
-	while ( Pool->Quitting == false );
 	return 0;
 	}
 
@@ -149,16 +148,15 @@ void ThreadPool_Destroy ( ThreadPool *Pool )
 	if ( Pool == NULL )
 		return;
 
-	ThreadPool_CancelAll ( Pool );
-
+	// Ask all the threads to join back
 	Pool->Quitting = true;
 	cnd_broadcast ( &Pool->WakeUpCondition );
-
 	for ( unsigned index = 0; index < Pool->ThreadCount; ++index )
 		{
 		thrd_join ( Pool->ThreadArray[index], NULL );
 		}
 
+	ThreadPool_CancelAll ( Pool );
 	Pool->ThreadCount = 0;
 	free ( Pool->ThreadArray );
 	mtx_destroy ( &Pool->TaskQueueMutex );
@@ -168,7 +166,7 @@ void ThreadPool_Destroy ( ThreadPool *Pool )
 	mtx_destroy ( &Pool->TaskFinishedMutex );
 
 	Pool->LastTaskID = -1;
-	PointerList_Destroy ( &Pool->TaskQueue );
+	PointerList_Clear ( &Pool->TaskQueue );
 	free ( Pool );
 	}
 
@@ -182,18 +180,18 @@ int ThreadPool_AddTask ( ThreadPool *Pool, int ( *FunctionPointer ) ( void * ), 
 	if ( NewTask == NULL )
 		return -2;
 
+	mtx_lock ( &Pool->TaskQueueMutex );
 	int TaskID = ++Pool->LastTaskID;
 	NewTask->FunctionPointer = FunctionPointer;
 	NewTask->Argument = Argument;
 	NewTask->TaskID = TaskID;
 	NewTask->Status = TASK_STATUS_QUEUED;
 
-	mtx_lock ( &Pool->TaskQueueMutex );
 	PointerList_AddAtEnd ( &Pool->TaskQueue, NewTask );
-	mtx_unlock ( &Pool->TaskQueueMutex );
-
 	LOG_DEBUG ( "Added new task. %u %u %u", ThreadPool_GetTaskCount ( Pool ), Pool->FreeThreads, Pool->ThreadCount );
+
 	cnd_signal ( &Pool->WakeUpCondition );
+	mtx_unlock ( &Pool->TaskQueueMutex );
 	return TaskID;
 	}
 
@@ -212,7 +210,11 @@ void ThreadPool_CancelTask ( ThreadPool *Pool, const int TaskID )
 		TaskData *TaskPointer = ( TaskData* ) PointerList_GetNodeData ( NodeIterator );
 		if ( TaskPointer->TaskID == TaskID )
 			{
+			// If it's already running, don't delete it!
+			if ( TaskPointer->Status == TASK_STATUS_RUNNING )
+				break;
 			free ( TaskPointer );
+			cnd_broadcast ( &Pool->TaskFinishedCondition );
 			PointerList_DestroyNode ( &Pool->TaskQueue, NodeIterator );
 			break;
 			}
@@ -230,6 +232,9 @@ void ThreadPool_CancelAll ( ThreadPool *Pool )
 	for ( PointerListNode *NodeIterator = PointerList_GetFirst ( &Pool->TaskQueue ); NodeIterator != NULL; NodeIterator = PointerList_GetNextNode ( NodeIterator ) )
 		{
 		TaskData *TaskPointer = ( TaskData* ) PointerList_GetNodeData ( NodeIterator );
+		// If it's already running, don't delete it!
+		if ( TaskPointer->Status == TASK_STATUS_RUNNING )
+			continue;
 		free ( TaskPointer );
 		}
 	PointerList_Clear ( &Pool->TaskQueue );
