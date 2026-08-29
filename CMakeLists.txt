@@ -21,6 +21,7 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     set (PLATFORM_COMPILER_MSVC TRUE PARENT_SCOPE)
     set (PLATFORM_COMPILER_MSVC TRUE )
+    add_compile_options("/experimental:c11atomics")
 endif()
 
 include(CheckSymbolExists)

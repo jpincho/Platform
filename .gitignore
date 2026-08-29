@@ -1,4 +1,2 @@
 ﻿Platform.h
-fnmatch.h
-strndup.h
-strnlen
+*.orig

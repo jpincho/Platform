@@ -52,7 +52,7 @@ static int ThreadPool_ThreadWorker ( ThreadPool *Pool )
 		PointerListNode *TaskNode = NULL;
 		for ( TaskNode = PointerList_GetFirst ( &Pool->TaskQueue ); TaskNode != NULL; TaskNode = PointerList_GetNextNode ( TaskNode ) )
 			{
-			TaskData *TempTask = ( TaskData* ) PointerList_GetNodeData ( TaskNode );
+			TaskData *TempTask = ( TaskData * ) PointerList_GetNodeData ( TaskNode );
 			if ( TempTask->Status == TASK_STATUS_QUEUED ) // Found a queued task
 				{
 				CurrentTask = TempTask;
@@ -188,10 +188,10 @@ int ThreadPool_AddTask ( ThreadPool *Pool, int ( *FunctionPointer ) ( void * ), 
 	NewTask->Status = TASK_STATUS_QUEUED;
 
 	PointerList_AddAtEnd ( &Pool->TaskQueue, NewTask );
-	LOG_DEBUG ( "Added new task. %u %u %u", ThreadPool_GetTaskCount ( Pool ), Pool->FreeThreads, Pool->ThreadCount );
 
 	cnd_signal ( &Pool->WakeUpCondition );
 	mtx_unlock ( &Pool->TaskQueueMutex );
+	LOG_DEBUG ( "Added new task. %u %u %u", ThreadPool_GetTaskCount ( Pool ), Pool->FreeThreads, Pool->ThreadCount );
 	return TaskID;
 	}
 
@@ -207,7 +207,7 @@ void ThreadPool_CancelTask ( ThreadPool *Pool, const int TaskID )
 	mtx_lock ( &Pool->TaskQueueMutex );
 	for ( PointerListNode *NodeIterator = PointerList_GetFirst ( &Pool->TaskQueue ); NodeIterator != NULL; NodeIterator = PointerList_GetNextNode ( NodeIterator ) )
 		{
-		TaskData *TaskPointer = ( TaskData* ) PointerList_GetNodeData ( NodeIterator );
+		TaskData *TaskPointer = ( TaskData * ) PointerList_GetNodeData ( NodeIterator );
 		if ( TaskPointer->TaskID == TaskID )
 			{
 			// If it's already running, don't delete it!
@@ -231,7 +231,7 @@ void ThreadPool_CancelAll ( ThreadPool *Pool )
 	mtx_lock ( &Pool->TaskQueueMutex );
 	for ( PointerListNode *NodeIterator = PointerList_GetFirst ( &Pool->TaskQueue ); NodeIterator != NULL; NodeIterator = PointerList_GetNextNode ( NodeIterator ) )
 		{
-		TaskData *TaskPointer = ( TaskData* ) PointerList_GetNodeData ( NodeIterator );
+		TaskData *TaskPointer = ( TaskData * ) PointerList_GetNodeData ( NodeIterator );
 		// If it's already running, don't delete it!
 		if ( TaskPointer->Status == TASK_STATUS_RUNNING )
 			continue;
@@ -254,7 +254,7 @@ TaskStatus ThreadPool_GetTaskStatus ( ThreadPool *Pool, const int TaskID )
 	mtx_lock ( &Pool->TaskQueueMutex );
 	for ( PointerListNode *NodeIterator = PointerList_GetFirst ( &Pool->TaskQueue ); NodeIterator != NULL; NodeIterator = PointerList_GetNextNode ( NodeIterator ) )
 		{
-		TaskData *TaskPointer = ( TaskData* ) PointerList_GetNodeData ( NodeIterator );
+		TaskData *TaskPointer = ( TaskData * ) PointerList_GetNodeData ( NodeIterator );
 		if ( TaskPointer->TaskID == TaskID )
 			{
 			Result = TaskPointer->Status;

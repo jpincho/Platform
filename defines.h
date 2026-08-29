@@ -1,5 +1,12 @@
 #pragma once
 #include <stdlib.h>
+#include "Platform.h"
+
+#if defined (PLATFORM_WINDOWS)
+#define PLATFORM_PATH_SEPARATOR '\\'
+#elif defined (PLATFORM_LINUX)
+#define PLATFORM_PATH_SEPARATOR '/'
+#endif
 
 #ifdef __cplusplus
 #define BEGIN_C_DECLARATIONS extern "C" {
@@ -45,6 +52,7 @@
 
 #if defined(_MSC_VER)
 #define strdup _strdup
+#define alloca _alloca
 #endif
 
 #define ASSERT_FAIL(__CONDITION__) if(!(__CONDITION__)) {printf("ASSERT FAILED! (%s, %u) '%s'\n", __FILE__, __LINE__, #__CONDITION__); exit(-1);}
