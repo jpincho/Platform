@@ -1,7 +1,7 @@
 #pragma once
 #include <stdbool.h>
 #include <stdlib.h>
-#include <Platform/defines.h>
+#include "Platform.h"
 
 BEGIN_C_DECLARATIONS
 

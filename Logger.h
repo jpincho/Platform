@@ -1,5 +1,5 @@
 #pragma once
-#include "defines.h"
+#include "Platform.h"
 #include "ConsoleTextColor.h"
 
 BEGIN_C_DECLARATIONS

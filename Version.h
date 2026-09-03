@@ -1,6 +1,6 @@
 #pragma once
 #include <stdbool.h>
-#include "defines.h"
+#include "Platform.h"
 
 BEGIN_C_DECLARATIONS
 typedef struct

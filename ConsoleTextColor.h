@@ -1,8 +1,7 @@
 #pragma once
-#include "defines.h"
-
 #include <stdio.h>
 #include <stdint.h>
+#include "Platform.h"
 
 #define RESET		0
 #define BOLD		1

@@ -1,7 +1,7 @@
 #pragma once
 #include <stdint.h>
 #include <stdbool.h>
-#include <Platform/defines.h>
+#include "Platform.h"
 
 BEGIN_C_DECLARATIONS
 typedef struct

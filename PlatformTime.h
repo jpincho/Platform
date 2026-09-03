@@ -1,6 +1,6 @@
 #pragma once
 #include <time.h>
-#include "defines.h"
+#include "Platform.h"
 
 BEGIN_C_DECLARATIONS
 typedef struct

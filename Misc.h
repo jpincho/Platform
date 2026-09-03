@@ -1,6 +1,6 @@
 #pragma once
-#include <Platform/defines.h>
 #include <stdint.h>
+#include "Platform.h"
 
 BEGIN_C_DECLARATIONS
 int rand_range ( const int min, const int max );
