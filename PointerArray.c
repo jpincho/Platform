@@ -107,7 +107,7 @@ void PointerArray_Clear ( PointerArray *Array )
 	Array->Count = 0;
 	}
 
-void *PointerArray_Get ( const PointerArray *Array, const unsigned Index )
+const void *PointerArray_Get ( const PointerArray *Array, const unsigned Index )
 	{
 	return Array->Data[Index];
 	}

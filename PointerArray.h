@@ -6,7 +6,7 @@
 BEGIN_C_DECLARATIONS
 typedef struct
 	{
-	void **Data;
+	const void **Data;
 	unsigned Count, Capacity;
 	} PointerArray;
 
@@ -21,6 +21,6 @@ bool PointerArray_IsEmpty ( const PointerArray *Array );
 int PointerArray_Find ( PointerArray *Array, const void *Data );
 unsigned PointerArray_GetSize ( const PointerArray *Array );
 void PointerArray_Clear ( PointerArray *Array );
-void *PointerArray_Get ( const PointerArray *Array, const unsigned Index );
+const void *PointerArray_Get ( const PointerArray *Array, const unsigned Index );
 void PointerArray_Set ( const PointerArray *Array, const unsigned Index, const void *Data );
 END_C_DECLARATIONS
