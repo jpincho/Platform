@@ -67,9 +67,9 @@ static int ThreadPool_ThreadWorker ( ThreadPool *Pool )
 			{
 			CurrentTask->Result = CurrentTask->FunctionPointer ( CurrentTask->Argument );
 			CurrentTask->Status = TASK_STATUS_FINISHED;
+			mtx_lock ( &Pool->TaskQueueMutex );
 			cnd_broadcast ( &Pool->TaskFinishedCondition );
 			free ( CurrentTask );
-			mtx_lock ( &Pool->TaskQueueMutex );
 			PointerList_DestroyNode ( &Pool->TaskQueue, TaskNode );
 			mtx_unlock ( &Pool->TaskQueueMutex );
 			}
@@ -79,7 +79,7 @@ static int ThreadPool_ThreadWorker ( ThreadPool *Pool )
 			LOG_DEBUG ( "sleeping - %u %u %u", thrd_current(), Pool->FreeThreads, Pool->ThreadCount );
 			mtx_lock ( &Pool->WakeUpMutex );
 			cnd_wait ( &Pool->WakeUpCondition, &Pool->WakeUpMutex );
-			mtx_unlock ( &Pool->WakeUpMutex ); // unlock mutex so that other ThreadArray can wait using it
+			mtx_unlock ( &Pool->WakeUpMutex ); // unlock mutex so that other threads can wait using it
 			atomic_fetch_sub ( &Pool->FreeThreads, 1 );
 			LOG_DEBUG ( "woke up - %u %u %u", thrd_current(), Pool->FreeThreads, Pool->ThreadCount );
 			}

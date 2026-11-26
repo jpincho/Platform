@@ -1,17 +1,13 @@
 #pragma once
 #include <stdbool.h>
+#include <stdlib.h>
 
-bool Array_Resize ( void **ArrayPointer, const unsigned Used, unsigned *Capacity, const unsigned ElementSize, const unsigned DesiredCapacity, const bool Clear );
-bool Array_EnsureFreeSpace ( void **ArrayPointer, const unsigned Used, unsigned *Capacity, const unsigned ElementSize, const unsigned DesiredFreeSpace, const bool Clear );
-bool Array_DeleteAndShift ( void **ArrayPointer, unsigned *Used, const unsigned ElementSize, const unsigned IndexToDelete );
-bool Array_DeleteAndSwap ( void **ArrayPointer, unsigned *Used, const unsigned ElementSize, const unsigned IndexToDelete );
-void Array_Clear ( void **ArrayPointer, unsigned *Used, unsigned *Capacity, const unsigned ElementSize, const bool Clear );
-void Array_Free ( void **ArrayPointer, unsigned *Used, unsigned *Capacity );
-bool Memory_ReallocAndClear ( void **Pointer, const unsigned CurrentSize, const unsigned NewSize );
-bool Memory_Realloc ( void **Pointer, const unsigned NewSize );
-
-#define ARRAY_RESIZE(ARRAY,USED,CAPACITY,DESIRED)               Array_Resize            ((void**)&ARRAY,USED,&CAPACITY,sizeof(ARRAY[0]),DESIRED,true)
-#define ARRAY_ENSURE_FREE_SPACE(ARRAY,USED,CAPACITY,DESIRED)    Array_EnsureFreeSpace   ((void**)&ARRAY,USED,&CAPACITY,sizeof(ARRAY[0]),DESIRED,true)
-#define ARRAY_PUSH_BACK(ARRAY,USED,CAPACITY,ITEM)               {Array_EnsureFreeSpace  ((void**)&ARRAY,USED,&CAPACITY,sizeof(ARRAY[0]), 1, false);ARRAY[USED]=ITEM;++USED; }
-#define ARRAY_DELETE_AND_SWAP(ARRAY,USED,INDEX)                 Array_DeleteAndSwap     ((void**)&ARRAY,&USED,sizeof(ARRAY[0]), INDEX);
-#define ARRAY_DELETE_AND_SHIFT(ARRAY,USED,INDEX)                Array_DeleteAndShift    ((void**)&ARRAY,&USED,sizeof(ARRAY[0]), INDEX);
+bool Array_Resize ( void **ArrayPointer, const size_t Used, size_t *Capacity, const size_t ElementSize, const size_t DesiredCapacity, const bool Clear );
+bool Array_EnsureFreeSpace ( void **ArrayPointer, const size_t Used, size_t *Capacity, const size_t ElementSize, const size_t DesiredFreeSpace, const bool Clear );
+bool Array_ShiftRight ( void **ArrayPointer, size_t *Used, size_t *Capacity, const size_t ElementSize, const size_t IndexToShift, const size_t ShiftCount );
+bool Array_RemoveAndShift ( void **ArrayPointer, size_t *Used, const size_t ElementSize, const size_t IndexToRemove );
+bool Array_RemoveAndSwap ( void **ArrayPointer, size_t *Used, const size_t ElementSize, const size_t IndexToRemove );
+void Array_Clear ( void **ArrayPointer, size_t *Used, size_t *Capacity, const size_t ElementSize, const bool Clear );
+void Array_Free ( void **ArrayPointer, size_t *Used, size_t *Capacity );
+bool Memory_ReallocAndClear ( void **Pointer, const size_t CurrentSize, const size_t NewSize );
+bool Memory_Realloc ( void **Pointer, const size_t NewSize );

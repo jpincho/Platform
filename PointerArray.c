@@ -1,4 +1,5 @@
 #include "PointerArray.h"
+#include "ArrayUtils.h"
 #include <stdlib.h>
 #include <assert.h>
 
@@ -21,31 +22,16 @@ void PointerArray_Destroy ( PointerArray *Array )
 	Array->Data = NULL;
 	}
 
-bool PointerArray_Reserve ( PointerArray *Array, const unsigned NewCapacity )
+bool PointerArray_Reserve ( PointerArray *Array, const size_t NewCapacity )
 	{
 	if ( NewCapacity < Array->Count )
 		return false;
-	void *temp = realloc ( Array->Data, sizeof ( void * ) * NewCapacity );
-	assert ( temp != NULL );
-	if ( temp == NULL )
-		return false;
-	Array->Data = temp;
-	Array->Capacity = NewCapacity;
-	return true;
+	return Array_Resize ( ( void** ) &Array->Data, Array->Count, &Array->Capacity, sizeof ( void* ), NewCapacity, false );
 	}
 
-bool PointerArray_EnsureFreeSpace ( PointerArray *Array, const unsigned FreeSpace )
+bool PointerArray_EnsureFreeSpace ( PointerArray *Array, const size_t FreeSpace )
 	{
-	unsigned NeededCapacity = Array->Count + FreeSpace;
-	if ( NeededCapacity > Array->Capacity )
-		{
-		unsigned NewSize = NeededCapacity / 10;
-		NewSize *= 10;
-		if ( NewSize < NeededCapacity )
-			NewSize += 10;
-		return PointerArray_Reserve ( Array, NewSize );
-		}
-	return true;
+	return Array_EnsureFreeSpace ( ( void** ) &Array->Data, Array->Count, &Array->Capacity, sizeof ( void* ), FreeSpace, false );
 	}
 
 bool PointerArray_AddAtEnd ( PointerArray *Array, const void *Data )
@@ -58,28 +44,31 @@ bool PointerArray_AddAtEnd ( PointerArray *Array, const void *Data )
 	return true;
 	}
 
-bool PointerArray_InsertAt ( PointerArray *Array, const unsigned Index, const void *Data )
+bool PointerArray_InsertAt ( PointerArray *Array, const size_t Index, const void *Data )
 	{
 	if ( Index > Array->Count )
 		return false;
-	if ( PointerArray_EnsureFreeSpace ( Array, 1 ) == false )
-		return false;
 
-	// shift all elements forward
-	memmove ( Array->Data + Index + 1, Array->Data + Index, ( Array->Count - Index ) * sizeof ( void * ) );
+	if ( Array_ShiftRight ( ( void * * ) &Array->Data, &Array->Count, &Array->Capacity, sizeof ( void * ), Index, 1 ) == false )
+		return false;
 	Array->Data[Index] = Data;
-	++Array->Count;
 	return true;
 	}
 
-void PointerArray_RemoveAt ( PointerArray *Array, const unsigned Index )
+void PointerArray_RemoveAndShift ( PointerArray *Array, const size_t Index )
 	{
 	if ( Index >= Array->Count )
 		return;
 
-	// shift all elements back
-	memmove ( Array->Data + Index, Array->Data + Index + 1, ( Array->Count - Index - 1 ) * sizeof ( void * ) );
-	--Array->Count;
+	Array_RemoveAndShift ( ( void** ) &Array->Data, &Array->Count, sizeof ( void* ), Index );
+	}
+
+void PointerArray_RemoveAndSwap ( PointerArray *Array, const size_t Index )
+	{
+	if ( Index >= Array->Count )
+		return;
+
+	Array_RemoveAndSwap ( ( void** ) &Array->Data, &Array->Count, sizeof ( void* ), Index );
 	}
 
 bool PointerArray_IsEmpty ( const PointerArray *Array )
@@ -97,7 +86,7 @@ int PointerArray_Find ( PointerArray *Array, const void *Data )
 	return -1;
 	}
 
-unsigned PointerArray_GetSize ( const PointerArray *Array )
+size_t PointerArray_GetSize ( const PointerArray *Array )
 	{
 	return Array->Count;
 	}
@@ -107,12 +96,12 @@ void PointerArray_Clear ( PointerArray *Array )
 	Array->Count = 0;
 	}
 
-const void *PointerArray_Get ( const PointerArray *Array, const unsigned Index )
+const void *PointerArray_Get ( const PointerArray *Array, const size_t Index )
 	{
 	return Array->Data[Index];
 	}
 
-void PointerArray_Set ( const PointerArray *Array, const unsigned Index, const void *NewData )
+void PointerArray_Set ( const PointerArray *Array, const size_t Index, const void *NewData )
 	{
 	assert ( Index < Array->Count );
 	Array->Data[Index] = NewData;
